@@ -1,0 +1,1 @@
+path=`pwd` && cd /opt/inobi && docker exec -it inobi_$1_1 ${@:2} && cd $path
