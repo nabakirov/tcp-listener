@@ -18,7 +18,6 @@ def getBusRoute():
 
     with psycopg2.connect(traccar_conn) as conn:
         data = fetchData(busId, conn)
-        conn.close()
         l = []
         for point in data:
             l.append(list(point))
@@ -29,7 +28,6 @@ def getBusRoute():
 def getRouteList():
     with psycopg2.connect(inobi_conn) as conn:
         data = fetchLines(conn) 
-        conn.close()
         return jsonify(data)
 
 
@@ -41,7 +39,6 @@ def getLineRoute():
 
     with psycopg2.connect(inobi_conn) as conn:
         data = fetchRoute(line_id, conn)
-        conn.close()
 
         return jsonify(data), 200
 

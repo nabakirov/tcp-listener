@@ -69,8 +69,6 @@ def calc(short=True):
                             results[bus['mac']]['request'] = bus
                 else:
                     offlineCounter += 1
-            iconn.close()
-            tconn.close()
             response['results'] = results
             response['online'] = onlineCounter
             response['changed'] = changedCounter

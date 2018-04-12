@@ -30,7 +30,7 @@ def fetchBusList(conn):
         select 
             id,
             device_id,
-            line_id,
+            line_id
         from transports
         '''
         cursor.execute(sql)
