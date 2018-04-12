@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" />
+  		
+  		<script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"></script>
+  		<style type="text/css">
+  			html, body {
+		        height: 100%;
+		        margin: 0;
+		        padding: 0;
+		      }
+			#map{
+				
+				height: 95%;
+			}
+
+			.route_selector{
+				position: absolute;
+				bottom: 10px;
+				left: 10px;
+				 
+			}
+			#transport_form{
+				position: absolute;
+				bottom: 10px;
+				right: 10px;
+			}
+  		</style>
+
+	</head>
+	<body>
+		<form class="route_selector" id="routeForm">
+			<!-- <input type="text"> -->
+			<select id="routeList">
+
+			</select>
+			<input type="button" onclick="clearRoute()" value="clear">
+			<input type="submit" value="get route">
+
+		</form>
+		<form id="transport_form" class="transport_form">
+			<input type="tex">
+			<input type="button" onclick="clearTransport()" value="clear">
+			<input type="submit" value="get transport route">
+		</form>
+		<div id='map'></div>
+		
+		<!-- <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script> -->
+		<script>
+			'use strict';
+
+			const map = L.map('map',{
+				center:[42.875752, 74.595464],
+				zoom:13
+			});
+
+			window.map = map;
+
+			const osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+			const osmAttrib = 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+			const osm = new L.TileLayer(osmUrl, {attribution: osmAttrib});
+			map.addLayer(osm);
+		</script>
+		
+		<script type="text/javascript">
+			function getRouteList(){
+				return fetch('/api/route/list')
+					.then(function(raw){
+						if(raw.status == 200){
+							return raw.json();
+						}
+						else{
+							return false;
+						}
+					});
+			};
+
+			getRouteList().then(function(options){
+
+				list = document.getElementById('routeList')
+				options.forEach(function(data, i){
+					O = document.createElement('option');
+					O.setAttribute('id', data.id);
+					O.setAttribute('value', data.id);
+					O.appendChild(document.createTextNode(data.name +' '+ data.type))
+					list.appendChild(O)
+				})
+			})
+
+			var transportMarkers = [];
+			
+			var routeMarkers = [];
+
+			function getData(routeID){
+				var somedata;
+				return fetch('/api/line/route?id=' + routeID)
+					.then(function(raw){
+						if(raw.status == 200){
+							return raw.json();
+						}
+						else{
+							return false;
+						}
+					});
+			}
+
+			function get_transport_route(routeAttr){
+				var somedata;
+				return fetch('/api/bus/route?id=' + routeAttr)
+					.then(function(raw){
+						if(raw.status == 200){
+							return raw.json();
+						}
+						else{
+							return false;
+						}
+					});
+			}
+
+			function clearRoute(){
+				routeMarkers.forEach(function(item, i){
+					map.removeLayer(item);
+				});
+			}
+			function clearTransport(){
+				transportMarkers.forEach(function(item, i){
+					map.removeLayer(item);
+				});		
+			}
+			
+			
+
+
+			var transportRoute = document.getElementById("transport_form");
+			
+			transportRoute.addEventListener('submit', function(e){
+				clearTransport()
+				e.preventDefault();
+	    		e.stopPropagation();
+	    		var routeID = e.target[0].value;
+				var data = get_transport_route(routeID);
+				var pointList = []
+				data.then(function(data){
+					if (data != false){
+						for(var i = 0; i < data.length; i++){
+							pointList.push(new L.LatLng(data[i][0], data[i][1]));
+							
+							
+						}
+						var poly = new L.Polyline(pointList, {
+							color: 'black',
+							weight: 1,
+							smoothFactor: 15
+						}).addTo(map);
+						transportMarkers.push(poly);
+
+						
+					}
+				});
+			});
+
+
+			var routeSelectorForm = document.getElementById('routeForm');
+			
+			routeSelectorForm.addEventListener("submit", function(e){
+				clearRoute()
+				e.preventDefault();
+	    		e.stopPropagation();
+				var routeID = e.target[0].value;
+				var data = getData(routeID);
+				var pointList = []
+				data.then(function(data){
+					if (data != false){
+						data.forEach(function(data){
+							for(var i = 0; i < data.length; i++){
+							pointList.push(new L.LatLng(data[i][0], data[i][1]));
+							
+							
+							}
+							var poly = new L.Polyline(pointList, {
+								color: 'red',
+								weight: 4,
+								smoothFactor: 5
+							}).addTo(map);
+							routeMarkers.push(poly);
+						});
+						
+
+						
+					}
+				});
+							
+				
+				
+
+				
+			});
+
+			
+			
+		</script>
+	</body>
+</html>
