@@ -37,7 +37,7 @@ emails = [
 ]
 
 sender = dict(
-    email='inobisender@gmail.com',
-    password='AviSa123'
+    email='info@inobi.kg',
+    password='G2wSh97hl'
 )
 

@@ -28,10 +28,14 @@ def fetchBusList(conn):
     with conn.cursor() as cursor:
         sql = '''
         select 
-            id,
-            device_id,
-            line_id
-        from transports
+            t.id,
+            t.device_id,
+            t.line_id
+        from transports t
+        inner join transport_organization_transports tot
+            on t.id = tot.transport
+        where tot.organization = 1
+
         '''
         cursor.execute(sql)
         data = cursor.fetchall()

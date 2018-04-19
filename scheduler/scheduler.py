@@ -30,46 +30,45 @@ def refresh():
         s.get(InobiServer + '/socketio/delete')
 
 
-def check_transport():
-        try:
+def check_transport(on_timer=False):
+    try:
+        if on_timer:
+            r = s.get(Changer + '/checkOnTimer')
+        else:
             r = s.get(Changer + '/check')
-            if r.status_code == 200:
-                token = get_token()
-                if not token:
-                    raise Exception('login failed')
-                data = r.json()
-                results = data['results']
-                
-                logging.info('CHANGED {} | ONLINE {} | OFFLINE {}'.format(data['changed'], data['online'], data['offline']))
-                for k, v in results.items():
+        if r.status_code == 200:
+            token = get_token()
+            if not token:
+                raise Exception('login failed')
+            data = r.json()
+            results = data['results']
 
-                    save = s.patch(InobiServer + '/v2/buses', params=dict(jwt=token), json=v['request'])
-                    logging.info('{} {} {}'.format(k, v['from']['id'], v['to']['id']))
-            else:
-                logging.info('SERVER UNSWERED {}'.format(r.text))
-        except Exception as e:
-            logging.info('error {}'.format(e))
+            logging.info('CHANGED {} | ONLINE {} | OFFLINE {}'.format(data['changed'], data['online'], data['offline']))
+            for k, v in results.items():
 
+                save = s.patch(InobiServer + '/v2/buses', params=dict(jwt=token), json=v['request'])
+                logging.info('{} {} {}'.format(k, v['from']['id'], v['to']['id']))
+        else:
+            logging.info('SERVER UNSWERED {}'.format(r.text))
+    except Exception as e:
+        logging.info('error {}'.format(e))
 
-
-
-def timer(timeArr):
-    sched = BlockingScheduler()
-    for checkTime in timeArr:
-        sched.add_job(check_transport, 'interval', days=1, start_date=checkTime)
-    sched.add_job(refresh, 'interval', seconds = 30)
-    sched.start()
 
 
 
 if __name__ == '__main__':
     now = datetime.datetime.now()
-    date = now +  datetime.timedelta(days=1)
+    date = now + datetime.timedelta(days=1)
     hour10 = date.replace(hour=10, minute=0, second=0, microsecond=0)
     hour13 = date.replace(hour=13, minute=0, second=0, microsecond=0)
     hour18 = date.replace(hour=18, minute=0, second=0, microsecond=0)
-    timeArr = (hour10, hour13, hour18)
-    timer(timeArr)
+
+    sched = BlockingScheduler()
+    sched.add_job(check_transport, 'interval', days=1, start_date=hour10, kwargs=dict(on_timer=True))
+    sched.add_job(check_transport, 'interval', days=1, start_date=hour13)
+    sched.add_job(check_transport, 'interval', days=1, start_date=hour18)
+    sched.add_job(refresh, 'interval', seconds=30)
+    sched.start()
 
 
     

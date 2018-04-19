@@ -66,7 +66,8 @@ def calc(short=True):
 
                         if not short:
                             bus['line_id'] = toLine['id']
-                            results[bus['mac']]['request'] = bus
+                            results[bus['mac']]['request'] = dict(id=bus['id'],
+                                                                  line_id=bus['line_id'])
                 else:
                     offlineCounter += 1
             response['results'] = results

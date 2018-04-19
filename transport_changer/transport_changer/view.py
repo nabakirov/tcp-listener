@@ -2,9 +2,9 @@ from transport_changer import app
 from flask import request, abort, render_template, jsonify
 from .utils import getargs
 from .load_data.fetch import fetchData, fetchRoute, fetchLines
-from transport_changer.configs import inobi_conn, traccar_conn
+from transport_changer.configs import inobi_conn, traccar_conn, emails
 from .load_data.calculate import calc
-from .notify import mail_send
+from .notify import mail_send, send_email
 import psycopg2
 
 
@@ -52,7 +52,8 @@ def mapRender():
 def change():
     emails = getargs(request, 'emails')[0]
     result = calc(short=False)
-    msg = 'Subject: {} Changed\n\n'.format(result['changed'])
+    subject = '{} Changed\n\n'.format(result['changed'])
+    msg = ''
     for k, v in result['results'].items():
         if k == 'request':
             continue
@@ -63,14 +64,15 @@ def change():
         msg += '------------------------------------------------\n'
     msg += '\n{} Online\n{} Changed\n{} Offline'.format(result['online'], result['changed'], result['offline'])
     if emails:
-        mail_send(msg, emails=emails)
+        send_email(emails, subject, msg)
     return jsonify(result), 200
 
 
 @app.route('/checkOnTimer')
 def checkOnTimer():
     result = calc()
-    msg = 'Subject: {} Changed\n\n'.format(result['changed'])
+    subject = '{} Changed\n\n'.format(result['changed'])
+    msg = ''
     for k, v in result['results'].items():
         if k == 'request':
             continue
@@ -83,5 +85,16 @@ def checkOnTimer():
 
     msg += '\n{} Online\n{} Changed\n{} Offline'.format(result['online'], result['changed'], result['offline'])
 
-    mail_send(msg, emails=['nabakirov@gmail.com'])
+    send_email(emails, subject, msg)
     return msg, 200
+
+
+@app.route('/echo/<email>/<text>')
+def echo_on_email(email, text):
+    # msg = '''
+    # Subject: echo test
+    # From: info@inobi.kg
+    # '''
+    # mail_send(msg + text, [email])
+    send_email(email, 'echo test', text)
+    return 'check {}'.format(email)
