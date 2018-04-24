@@ -27,14 +27,14 @@ SERVER_DB = 'inobi'
 inobi_conn = ' '.join('{}={}'.format(k, v) for k, v in psql.items())
 traccar_conn = ' '.join('{}={}'.format(k, v) for k, v in psql2.items())
 
-emails = [
+emails = {
     "nabakirov@gmail.com",
     "management-ml@tez.kg",
     "irsalabd@gmail.com",
     "maksat@tez.kg",
     "begaiym@tez.kg",
     "ernis@tez.kg"
-]
+}
 
 sender = dict(
     email='info@inobi.kg',
