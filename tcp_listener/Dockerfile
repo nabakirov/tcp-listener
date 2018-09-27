@@ -28,4 +28,4 @@ RUN pip3 install -r requirements.txt
 EXPOSE 2222
 
 # start app
-CMD [ "/usr/bin/python3", "./run.py", "configs/inobi_transport.py" ]
+CMD [ "/usr/bin/python3", "./run.py"]
