@@ -15,6 +15,9 @@ class Adapter:
         # Given a datastring, determine adapter type it's for
         # and return this adapter's class
         from .tk102 import TK102
+        from .tk103 import TK103
         if TK102.decode(datastring):
             return TK102
+        elif TK103.decode(datastring):
+            return TK103
         # raise NotImplementedError("Unknown data".format(datastring))
