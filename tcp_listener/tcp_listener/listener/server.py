@@ -1,51 +1,52 @@
-from twisted.internet import protocol, reactor, threads
+from twisted.internet import protocol, reactor
 from twisted.web.client import Agent
-from .handler import handle_tracker
-from tcp_listener import configs
+from tcp_listener.adapter import Adapter
+from tcp_listener import settings
+from .request import request
+from logging import getLogger
+
+from twisted.internet.defer import setDebugging
+setDebugging(True)
+
+logger = getLogger()
 
 agent = Agent(reactor)
 
-counter = 0
-connecteds = dict()
-import logging
-ids = dict()
 
 class Server(protocol.Protocol):
     def dataReceived(self, data):
-        id_ = self.id = self.id or data[1:13]
-        
-        if id_ in connecteds:
-            if connecteds[id_] is not self:
-                connecteds[id_].is_primary = False
-                connecteds[id_].transport.loseConnection()
-                connecteds[id_] = self
+        logger.debug(data)
+        try:
+            datastring = data.decode()
+        except UnicodeDecodeError:
+            logger.exception(data)
+            self.transport.loseConnection()
+            return
+        adapter = Adapter.detect(datastring)
+        if adapter:
+            message = adapter.decode(datastring)
+            response = adapter.response_to(message)
+            if response:
+                logger.debug("response {}".format(response.encode()))
+                self.transport.write(response.encode())
+            request(agent, message.full_url)
         else:
-            connecteds[id_] = self
-        d = threads.deferToThread(handle_tracker, data, agent)
-        d.addErrback(print)
-        self.transport.write(b'ok')
-        if not ids.get(id_, None):
-            ids[id_] = 1
-            logging.debug('{}'.format(id_.decode()))
+            logger.error('UNKNOWN TRACKER {}'.format(data))
+            self.transport.loseConnection()
 
-    def connectionLost(self, reason):
-        global counter
-        counter -= 1
-        logging.info('{} disconnected {}'.format(counter, self.id))
-        # del connecteds[self.id]
-        self.transport.loseConnection()
+    def connectionLost(self, *args, **kwargs):
+        logger.debug("DEVICE DISCONNECTED {} {}".format(args, kwargs))
+        # self.transport.loseConnection()
 
     def connectionMade(self):
-        global counter
-        counter += 1
-        self.id = None
-        logging.info('{} connected'.format(counter))
+        logger.debug("DEVICE CONNECTED")
 
 
 def start():
-    logging.info('port {}'.format(configs['LISTENER_PORT']))
+    logger.info('TCP Listener port {}'.format(settings.PORT))
+    logger.info('URL to send requests {}'.format(settings.REQUEST_URL))
     factory = protocol.ServerFactory()
     factory.protocol = Server
-    reactor.listenTCP(configs['LISTENER_PORT'], factory)
+    reactor.listenTCP(settings.PORT, factory)
     reactor.run()
 
