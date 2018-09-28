@@ -5,9 +5,9 @@ WORKDIR /opt/inobi/
 COPY requirements.txt ./
 
 RUN apk --update add \
-      libffi-dev python3-dev \
-      libffi python3 py-pip \
-      tzdata
+      build-base libffi-dev python3-dev \
+      libffi openssl ca-certificates python3 python3 py-pip \
+      zlib-dev tzdata
 
 ENV TZ=Asia/Bishkek
 
