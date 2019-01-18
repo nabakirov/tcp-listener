@@ -19,6 +19,7 @@ class Message:
         self.speed = speed
         self.bearing = bearing
         self.timestamp = timestamp
+        self.is_full = False
 
     def as_dict(self):
         return {

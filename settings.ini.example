@@ -1,0 +1,5 @@
+[settings]
+PORT = 2222
+LNG_KEY = lon
+REQUEST_URL = http://nginx:5000/transport/bus
+LOG_LEVEL = INFO

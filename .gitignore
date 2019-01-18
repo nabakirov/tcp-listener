@@ -21,3 +21,4 @@ InitPostgres
 t_est/*.db
 
 *.ini
+.*

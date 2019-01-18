@@ -32,7 +32,7 @@ class Server(protocol.Protocol):
             request(agent, message.full_url)
         else:
             logger.error('UNKNOWN TRACKER {}'.format(data))
-            self.transport.loseConnection()
+            # self.transport.loseConnection()
 
     def connectionLost(self, *args, **kwargs):
         logger.debug("DEVICE DISCONNECTED {} {}".format(args, kwargs))

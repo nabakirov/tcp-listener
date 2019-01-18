@@ -19,7 +19,6 @@ def DMCtoDD(coord):
 
 
 def to_timestamp(date):
-
     if len(date) != 6:
         return False
     time = int(datetime.strptime('{0}-{1}-{2} {3}:{4}:{5}'.format(*date), '%y-%m-%d %H:%M:%S').timestamp()) + 21600

@@ -1,2 +1,0 @@
-path=`pwd` && cd /opt/inobi && docker-compose logs -ft --tail 50 $1 && cd $path
-

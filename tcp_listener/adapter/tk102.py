@@ -10,6 +10,8 @@ class MessageTypes:
     LOCATION_FULL = 'location_full'
     LOCATION_LOW = 'location_low'
 
+    TRACKER = 'tracker'
+
 
 # e.g. ##,imei:865328021048409,A;
 re_init = '^##,imei:(?P<imei>\d+),A'
@@ -21,7 +23,7 @@ re_heartbeat_compiler = re.compile(re_heartbeat)
 
 # e.g. imei:864180034536487,tracker,180924184758,,F,104752.000,A,3543.6957,N,05129.6419,E,0.00,0;
 re_location_full = "^imei:(?P<imei>\d+)," \
-                   "tracker,(?P<local_date>\d*)," \
+                   "(?P<type>\w+),(?P<local_date>\d*)," \
                    "(?P<local_time>\d*)," \
                    "F," \
                    "(?P<time_utc>\d+\.\d+)," \
@@ -35,7 +37,7 @@ re_location_full = "^imei:(?P<imei>\d+)," \
 re_location_full_compile = re.compile(re_location_full)
 
 re_location_low = '^imei:(?P<imei>\d+),' + \
-                  'tracker,' + \
+                  '(?P<type>\w+),' + \
                   '(?P<local_date>\d*),' + \
                   '(?P<local_time>\d*),' + \
                   'L,' + \
@@ -47,22 +49,40 @@ re_location_low = '^imei:(?P<imei>\d+),' + \
 re_location_low_compile = re.compile(re_location_low)
 
 
+re_type_identifier = '^imei:(?P<imei>\d+),(?P<type>\w+\s+\w+|\w+)'
+re_type_identifier_compile = re.compile(re_type_identifier)
+
+
 class TK102(Adapter):
     @classmethod
     def decode(cls, datastring):
-        if re_init_compiler.match(datastring):
-            imei = re.match(re_init, datastring).group('imei')
+        match = re_init_compiler.match(datastring)
+        if match:
+            imei = match.group('imei')
             message = Message(id=imei, type=MessageTypes.INIT, raw=datastring)
-        elif re_heartbeat_compiler.match(datastring):
-            imei = re.match(re_heartbeat, datastring).group('imei')
+            return message
+
+        match = re_heartbeat_compiler.match(datastring)
+        if match:
+            imei = match.group('imei')
             message = Message(id=imei, type=MessageTypes.HEARTBEAT, raw=datastring)
-        elif re_location_low_compile.match(datastring):
-            match = re_location_low_compile.match(datastring)
+            return message
+
+        match = re_type_identifier_compile.match(datastring)
+        if match:
+            type = match.group('type')
+            if type != MessageTypes.TRACKER:
+                return Message(id=match.group('imei'), raw=datastring)
+
+        match = re_location_low_compile.match(datastring)
+        if match:
             imei = match.group('imei')
             message = Message(id=imei, type=MessageTypes.LOCATION_LOW, raw=datastring)
-        elif re_location_full_compile.match(datastring):
-            match = re_location_full_compile.match(datastring)
+            return message
+        match = re_location_full_compile.match(datastring)
+        if match:
             imei = match.group('imei')
+
             message = Message(id=imei, type=MessageTypes.LOCATION_FULL, raw=datastring)
 
             latitude = match.group('latitude')
@@ -108,9 +128,9 @@ class TK102(Adapter):
             message.speed = speed
             message.bearing = bearing
             message.timestamp = int(now())
-        else:
-            return None
-        return message
+            return message
+
+        return None
 
     @classmethod
     def response_to(cls, message: Message):
@@ -119,5 +139,5 @@ class TK102(Adapter):
         elif MessageTypes.HEARTBEAT == message.type:
             return 'ON'
 
-        return None
+        return 'OK'
 

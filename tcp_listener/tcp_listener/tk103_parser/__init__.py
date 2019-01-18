@@ -1,1 +1,0 @@
-from .parseGPS import Parse
